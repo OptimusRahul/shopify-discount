@@ -1,0 +1,9 @@
+{
+  "product_discount_badge": {
+    "default_message": "Buy {minQty}+, get {percentOff}% off!"
+  },
+  "cart_discount_message": {
+    "default_heading": "Volume Discount Applied!",
+    "default_message": "You're getting {percentOff}% off on items with {minQty}+ quantity"
+  }
+}

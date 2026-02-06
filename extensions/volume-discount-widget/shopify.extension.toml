@@ -1,0 +1,10 @@
+api_version = "2024-10"
+
+[[extensions]]
+uid = "2919c01d-8ee4-83a6-4681-735b944eb8cbbfa0e212"
+type = "theme"
+name = "Volume Discount Widget"
+handle = "volume-discount-widget"
+
+[[extensions.targeting]]
+target = "online_store.theme_app_extension"

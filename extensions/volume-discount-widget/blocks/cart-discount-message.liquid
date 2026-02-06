@@ -1,0 +1,133 @@
+{% comment %}
+  Cart page discount message - shows discount info for eligible items in cart
+{% endcomment %}
+
+{%- assign config_value = shop.metafields.volume_discount.rules.value -%}
+
+{% if config_value != blank %}
+  {%- comment -%} Extract minQty from config {%- endcomment -%}
+  {%- assign minQty_parts = config_value | split: '"minQty":' -%}
+  {%- if minQty_parts.size > 1 -%}
+    {%- assign minQty_str = minQty_parts[1] | split: ',' | first | split: '}' | first | strip -%}
+    {%- assign minQty = minQty_str | plus: 0 -%}
+  {%- else -%}
+    {%- assign minQty = 2 -%}
+  {%- endif -%}
+  
+  {%- comment -%} Extract percentOff from config {%- endcomment -%}
+  {%- assign percentOff_parts = config_value | split: '"percentOff":' -%}
+  {%- if percentOff_parts.size > 1 -%}
+    {%- assign percentOff_str = percentOff_parts[1] | split: '}' | first | strip -%}
+    {%- assign percentOff = percentOff_str | plus: 0 -%}
+  {%- else -%}
+    {%- assign percentOff = 20 -%}
+  {%- endif -%}
+  
+  {%- comment -%} Check if any cart items are eligible {%- endcomment -%}
+  {%- assign has_eligible_items = false -%}
+  
+  {%- for item in cart.items -%}
+    {%- assign item_product_gid = item.product.id | prepend: 'gid://shopify/Product/' -%}
+    
+    {%- if config_value contains item_product_gid and item.quantity >= minQty -%}
+      {%- assign has_eligible_items = true -%}
+      {%- break -%}
+    {%- endif -%}
+  {%- endfor -%}
+  
+  {% if has_eligible_items %}
+    {%- comment -%} Build the message by replacing placeholders {%- endcomment -%}
+    {%- assign message = block.settings.message_template -%}
+    {%- assign message = message | replace: '__MINQTY__', minQty -%}
+    {%- assign message = message | replace: '__PERCENTOFF__', percentOff -%}
+    
+    <div class="cart-discount-message" style="
+      background: {{ block.settings.background_color }};
+      color: {{ block.settings.text_color }};
+      padding: 16px;
+      border-radius: {{ block.settings.border_radius }}px;
+      margin: 16px 0;
+      font-size: {{ block.settings.font_size }}px;
+      border-left: 4px solid {{ block.settings.accent_color }};
+    ">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 24px;">{{ block.settings.icon }}</span>
+        <div>
+          <div style="font-weight: 600; margin-bottom: 4px;">
+            {{ block.settings.heading }}
+          </div>
+          <div style="opacity: 0.9;">
+            {{ message }}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "Cart Discount Message",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Volume Discount Applied! 🎉"
+    },
+    {
+      "type": "text",
+      "id": "message_template",
+      "label": "Message Template",
+      "default": "You're getting __PERCENTOFF__% off on items with __MINQTY__+ quantity",
+      "info": "Use __MINQTY__ and __PERCENTOFF__ as placeholders"
+    },
+    {
+      "type": "text",
+      "id": "icon",
+      "label": "Icon",
+      "default": "✅",
+      "info": "Emoji or text to show"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#E3F2FD"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#0D47A1"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent Color",
+      "default": "#2196F3"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border Radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font Size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "default": 14,
+      "unit": "px"
+    }
+  ]
+}
+{% endschema %}

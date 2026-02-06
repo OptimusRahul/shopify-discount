@@ -1,0 +1,140 @@
+{% comment %}
+  Product page discount badge - shows "Buy X, get Y% off" for eligible products
+{% endcomment %}
+
+{%- assign config_value = shop.metafields.volume_discount.rules.value -%}
+
+{% if config_value != blank %}
+  {%- comment -%} Parse JSON manually using split {%- endcomment -%}
+  {%- assign current_product_gid = product.id | prepend: 'gid://shopify/Product/' -%}
+  
+  {%- comment -%} Check if current product is in the config {%- endcomment -%}
+  {%- assign is_eligible = false -%}
+  {%- if config_value contains current_product_gid -%}
+    {%- assign is_eligible = true -%}
+  {%- endif -%}
+  
+  {% if is_eligible %}
+    {%- comment -%} Extract minQty from config {%- endcomment -%}
+    {%- assign minQty_parts = config_value | split: '"minQty":' -%}
+    {%- if minQty_parts.size > 1 -%}
+      {%- assign minQty_str = minQty_parts[1] | split: ',' | first | split: '}' | first | strip -%}
+      {%- assign minQty = minQty_str | plus: 0 -%}
+    {%- else -%}
+      {%- assign minQty = 2 -%}
+    {%- endif -%}
+    
+    {%- comment -%} Extract percentOff from config {%- endcomment -%}
+    {%- assign percentOff_parts = config_value | split: '"percentOff":' -%}
+    {%- if percentOff_parts.size > 1 -%}
+      {%- assign percentOff_str = percentOff_parts[1] | split: '}' | first | strip -%}
+      {%- assign percentOff = percentOff_str | plus: 0 -%}
+    {%- else -%}
+      {%- assign percentOff = 20 -%}
+    {%- endif -%}
+    
+    {%- comment -%} Build the message by replacing placeholders {%- endcomment -%}
+    {%- assign message = block.settings.message_template -%}
+    {%- assign message = message | replace: '__MINQTY__', minQty -%}
+    {%- assign message = message | replace: '__PERCENTOFF__', percentOff -%}
+    
+    <div class="volume-discount-badge" style="
+      background: {{ block.settings.background_color }};
+      color: {{ block.settings.text_color }};
+      padding: 12px 16px;
+      border-radius: {{ block.settings.border_radius }}px;
+      margin: 16px 0;
+      font-size: {{ block.settings.font_size }}px;
+      font-weight: {{ block.settings.font_weight }};
+      text-align: {{ block.settings.text_align }};
+      border: 2px solid {{ block.settings.border_color }};
+    ">
+      <span class="discount-icon" style="margin-right: 8px;">{{ block.settings.icon }}</span>
+      <span class="discount-message">{{ message }}</span>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "Volume Discount Badge",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "message_template",
+      "label": "Message Template",
+      "default": "Buy __MINQTY__+, get __PERCENTOFF__% off!",
+      "info": "Use __MINQTY__ and __PERCENTOFF__ as placeholders"
+    },
+    {
+      "type": "text",
+      "id": "icon",
+      "label": "Icon",
+      "default": "🎉",
+      "info": "Emoji or text to show before message"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#E8F5E9"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#1B5E20"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "#4CAF50"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border Radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font Size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "type": "select",
+      "id": "font_weight",
+      "label": "Font Weight",
+      "options": [
+        { "value": "normal", "label": "Normal" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semi-bold" },
+        { "value": "bold", "label": "Bold" }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "select",
+      "id": "text_align",
+      "label": "Text Alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    }
+  ]
+}
+{% endschema %}
