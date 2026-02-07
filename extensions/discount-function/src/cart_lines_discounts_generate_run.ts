@@ -47,9 +47,9 @@ export function cartLinesDiscountsGenerateRun(
     return NO_DISCOUNT;
   }
 
-  const candidates = [];
+  const targets = [];
 
-  // Check each cart line
+  // Check each cart line and collect all eligible targets
   for (const line of input.cart.lines) {
     // Skip if not a ProductVariant
     if (line.merchandise.__typename !== 'ProductVariant') {
@@ -67,33 +67,34 @@ export function cartLinesDiscountsGenerateRun(
     
     // Check if quantity meets minimum requirement
     if (isConfiguredProduct && line.quantity >= minQty) {
-      candidates.push({
-        targets: [
-          {
-            cartLine: {
-              id: line.id,
-            },
-          },
-        ],
-        value: {
-          percentage: {
-            value: percentOff,
-          },
+      targets.push({
+        cartLine: {
+          id: line.id,
         },
-        message: `Buy ${minQty}+, get ${percentOff}% off`,
       });
     }
   }
 
-  if (candidates.length === 0) {
+  if (targets.length === 0) {
     return NO_DISCOUNT;
   }
 
+  // Return a single operation that applies to all eligible cart lines
   return {
     operations: [
       {
         productDiscountsAdd: {
-          candidates: candidates,
+          candidates: [
+            {
+              targets: targets,
+              value: {
+                percentage: {
+                  value: percentOff,
+                },
+              },
+              message: `Buy ${minQty}+, get ${percentOff}% off`,
+            },
+          ],
           selectionStrategy: ProductDiscountSelectionStrategy.First,
         },
       },
